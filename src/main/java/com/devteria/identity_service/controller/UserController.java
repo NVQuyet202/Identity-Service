@@ -16,6 +16,6 @@ public class UserController {
     @PostMapping("/users")
     //Map data request vào object
     User createUser(@RequestBody UserCreationRequest request) {
-        return userService.createRequest(request);
+        return userService.createUser(request);
     }
 }
