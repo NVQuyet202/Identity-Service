@@ -10,9 +10,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 @Controller
 public class UserController {
+    //Controller sẽ gọi xuống service
     @Autowired
     private UserService userService;
 
+    //Khai báo endpoint với method post
     @PostMapping("/users")
     //Map data request vào object
     User createUser(@RequestBody UserCreationRequest request) {
