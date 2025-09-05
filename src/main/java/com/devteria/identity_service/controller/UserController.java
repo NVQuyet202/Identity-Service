@@ -1,5 +1,6 @@
 package com.devteria.identity_service.controller;
 
+import com.devteria.identity_service.dto.request.ApiResponse;
 import com.devteria.identity_service.dto.request.UserCreationRequest;
 import com.devteria.identity_service.dto.request.UserUpdateRequest;
 import com.devteria.identity_service.entity.User;
@@ -22,8 +23,10 @@ public class UserController {
     @PostMapping
     //Map data request vào object
     //@Valid khai báo cho framework biết cần validate object này
-    User createUser(@RequestBody @Valid UserCreationRequest request) {
-        return userService.createUser(request);
+    ApiResponse<User> createUser(@RequestBody @Valid UserCreationRequest request) {
+        ApiResponse<User> response = new ApiResponse<>();
+        response.setResult(userService.createUser(request));
+        return response;
     }
 
     @GetMapping
