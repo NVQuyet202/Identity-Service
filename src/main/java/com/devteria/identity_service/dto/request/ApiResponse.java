@@ -1,34 +1,19 @@
 package com.devteria.identity_service.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class ApiResponse<T> {
-    private int code = 200;
-    private String mesage = "Success";
-    private T result;
+     int code = 200;
+     String mesage = "Success";
+     T result;
 
-    public int getCode() {
-        return code;
-    }
 
-    public void setCode(int code) {
-        this.code = code;
-    }
-
-    public String getMesage() {
-        return mesage;
-    }
-
-    public void setMesage(String mesage) {
-        this.mesage = mesage;
-    }
-
-    public T getResult() {
-        return result;
-    }
-
-    public void setResult(T result) {
-        this.result = result;
-    }
 }
