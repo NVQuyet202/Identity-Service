@@ -10,12 +10,15 @@ import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/users")
 @RequiredArgsConstructor
@@ -29,15 +32,31 @@ public class UserController {
     @PostMapping
     //Map data request vào object
     //@Valid khai báo cho framework biết cần validate object này
-    ApiResponse<User> createUser(@RequestBody @Valid UserCreationRequest request) {
-        ApiResponse<User> response = new ApiResponse<>();
-        response.setResult(userService.createUser(request));
-        return response;
+    ApiResponse<UserResponse> createUser(@RequestBody @Valid UserCreationRequest request) {
+        return ApiResponse.<UserResponse>builder()
+                .result(userService.createUser(request))
+                .build();
     }
 
     @GetMapping
-    List<User> getAllUsers() {
-            return userService.getUsers();
+    ApiResponse<List<UserResponse>> getAllUsers() {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        log.info("Username: {}", authentication.getName());
+        authentication.getAuthorities().forEach(grantedAuthority ->
+                log.info(grantedAuthority.getAuthority()));
+
+        return ApiResponse.<List<UserResponse>>builder()
+                .result(userService.getUsers())
+                .build();
+    }
+
+    @GetMapping("/myInfo")
+    ApiResponse<UserResponse> getmyInfo() {
+
+        return ApiResponse.<UserResponse>builder()
+                .result(userService.getMyInfo())
+                .build();
     }
 
     @GetMapping("/{userId}")
@@ -55,4 +74,6 @@ public class UserController {
          userService.deleteUser(userId);
         return "Delete User Success!" ;
     }
+
+
 }

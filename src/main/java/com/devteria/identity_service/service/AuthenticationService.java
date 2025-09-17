@@ -4,6 +4,7 @@ import com.devteria.identity_service.dto.request.AuthenticationRequest;
 import com.devteria.identity_service.dto.request.IntrospectRequest;
 import com.devteria.identity_service.dto.response.AuthenticationResponse;
 import com.devteria.identity_service.dto.response.IntrospectResponse;
+import com.devteria.identity_service.entity.User;
 import com.devteria.identity_service.exception.AppException;
 import com.devteria.identity_service.exception.ErrorCode;
 import com.devteria.identity_service.repository.UserRepository;
@@ -12,6 +13,7 @@ import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import jakarta.annotation.PostConstruct;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -21,12 +23,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import java.text.ParseException;
 import java.time.Instant;
 
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.StringJoiner;
 
 @Slf4j
 @Service
@@ -36,7 +40,7 @@ public class AuthenticationService {
     UserRepository userRepository;
 
     @NonFinal
-    @Value("${jwt.signerKey}")
+    @Value("${jwt.signerKey:OETp8GHUN0Tx8k18iL1kmVS43yJ507n3IEN/lyuZdWm4t5c6jXMcUGD9Y0+k6bbA}")
     protected  String SIGNER_KEY;
 
     public AuthenticationResponse authenticate(AuthenticationRequest request){
@@ -47,7 +51,7 @@ public class AuthenticationService {
         if(!authenticated)
             throw new AppException(ErrorCode.UNAUTHENTICATED);
 
-        var token = genarateToken(request.getUsername());
+        var token = genarateToken(user);
 
         return AuthenticationResponse.builder()
                 .token(token)
@@ -73,20 +77,20 @@ public class AuthenticationService {
 
     }
 
-    private String genarateToken(String username) {
+    private String genarateToken(User user) {
         //Để tạo token đầu tiên cần có:
         //header: chứa thuật toán sẽ sử dụng
         JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
 
         //body: nội dung của token
         JWTClaimsSet jwtClaimSet = new  JWTClaimsSet.Builder()
-                .subject(username)                      //Claim subject đại diện cho user login
+                .subject(user.getUsername())                      //Claim subject đại diện cho user login
                 .issuer("devteria.com")                 //Xác định token được issue từ ai, định danh token
                 .issueTime(new Date())                  //Thời gian issue token và thời gian hết hạn
                 .expirationTime(new Date(
                         Instant.now().plus(1,ChronoUnit.HOURS).toEpochMilli()
                 ))
-                .claim("customClaim","Custom") //Dùng để custom giá trị vào body
+                .claim("scope",buildScope(user)) //Dùng để custom giá trị vào body
                 .build();
 
         Payload payload = new Payload(jwtClaimSet.toJSONObject());
@@ -102,6 +106,14 @@ public class AuthenticationService {
             log.error("Cannot create token ",e);
             throw new RuntimeException(e);
         }
+    }
+
+    private String buildScope(User user) {
+        StringJoiner stringJoiner = new StringJoiner(" ");
+        if(!CollectionUtils.isEmpty((user.getRoles())))
+            user.getRoles().forEach(stringJoiner::add);
+
+          return   stringJoiner.toString();
     }
 
 
