@@ -12,11 +12,7 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class UserResponse {
-     String id;
-     String username;
-     String firstName;
-     String lastName;
-     LocalDate dob;
-     Set<Role> roles;
+public class PermissionResponse {
+     String name;
+     String description;
 }

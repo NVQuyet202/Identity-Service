@@ -1,4 +1,4 @@
-package com.devteria.identity_service;
+package com.devteria.IdentityService;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

@@ -15,18 +15,11 @@ import java.util.Set;
 @NoArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class User {
-    //Cần 1 annotation để định nghĩa Id
+public class Role {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID) // Dùng annotation để định nghĩa Id là UUID
-     String id;
-     String username;
-     String password;
-     String firstName;
-     String lastName;
-     LocalDate dob;
+    String name;
+    String description;
 
-     @ManyToMany
-     Set<Role> roles;
-
+    @ManyToMany
+    Set<Permission> permissions;
 }
