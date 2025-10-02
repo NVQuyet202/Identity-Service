@@ -1,11 +1,13 @@
 package com.devteria.identity_service.dto.request;
 
 import com.devteria.identity_service.exception.ErrorCode;
+import com.devteria.identity_service.validator.DobConstraint;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Data //Anotation giúp tạo các hàm getter setter
 @NoArgsConstructor // khởi tạo contrucor no Args
@@ -20,7 +22,8 @@ public class UserCreationRequest {
     String password;
     String firstName;
     String lastName;
-    LocalDate dob;
 
+    @DobConstraint(min = 18, message = "INVALID_DOB")
+    LocalDate dob;
 
 }
