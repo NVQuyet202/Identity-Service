@@ -46,8 +46,16 @@ public class AuthenticationService {
     InvalidatedTokenRepository invalidatedTokenRepository;
 
     @NonFinal
-    @Value("${jwt.signerKey:OETp8GHUN0Tx8k18iL1kmVS43yJ507n3IEN/lyuZdWm4t5c6jXMcUGD9Y0+k6bbA}")
+    @Value("${jwt.signerKey}")
     protected  String SIGNER_KEY;
+
+    @NonFinal
+    @Value("${jwt.valid-duration}")
+    protected  long VALID_DURATION;
+
+    @NonFinal
+    @Value("${jwt.refreshable-duration}")
+    protected  long REFRESHABLE_DURATION;
 
     public AuthenticationResponse authenticate(AuthenticationRequest request){
         var user = userRepository.findByUsername(request.getUsername()).orElseThrow(() -> new AppException(ErrorCode.USER_DOESNT_EXISTED));
@@ -71,7 +79,7 @@ public class AuthenticationService {
         boolean isValid = true;
 
         try {
-            verifyToken(token);
+            verifyToken(token,false);
         } catch (AppException e) {
             isValid = false;
         }
@@ -83,21 +91,25 @@ public class AuthenticationService {
     }
 
     public void logout(LogoutRequest request) throws ParseException, JOSEException {
-        var signToken = verifyToken(request.getToken());
+        try {
+            var signToken = verifyToken(request.getToken(),true);
+            String jit = signToken.getJWTClaimsSet().getJWTID();
+            Date expiryTime = signToken.getJWTClaimsSet().getExpirationTime();
 
-        String jit = signToken.getJWTClaimsSet().getJWTID();
-        Date expiryTime = signToken.getJWTClaimsSet().getExpirationTime();
+            InvalidatedToken invalidatedToken = InvalidatedToken.builder()
+                    .id(jit)
+                    .expiryTime(expiryTime)
+                    .build();
+            invalidatedTokenRepository.save(invalidatedToken);
 
-        InvalidatedToken invalidatedToken = InvalidatedToken.builder()
-                .id(jit)
-                .expiryTime(expiryTime)
-                .build();
-        invalidatedTokenRepository.save(invalidatedToken);
+        } catch (AppException e) {
+            log.info("Token already expried");
+        }
     }
 
     public AuthenticationResponse refreshToken (RefreshRequest request) throws ParseException, JOSEException {
         //B1: Kiểm tra hiệu lực của token
-        var signJWT = verifyToken(request.getToken());
+        var signJWT = verifyToken(request.getToken(),true);
 
          var jit = signJWT.getJWTClaimsSet().getJWTID();
          var expiryTime = signJWT.getJWTClaimsSet().getExpirationTime();
@@ -122,15 +134,18 @@ public class AuthenticationService {
                 .build();
     }
 
-    private SignedJWT verifyToken (String token) throws JOSEException, ParseException {
+    private SignedJWT verifyToken (String token, boolean isRefresh) throws JOSEException, ParseException {
         JWSVerifier verifier = new MACVerifier(SIGNER_KEY.getBytes());
 
         SignedJWT signedJWT = SignedJWT.parse(token);
 
-        Date expityTime = signedJWT.getJWTClaimsSet().getExpirationTime();
+        Date expiryTime = (isRefresh)
+                ? new Date(signedJWT.getJWTClaimsSet().getIssueTime()
+                .toInstant().plus(REFRESHABLE_DURATION,ChronoUnit.SECONDS).toEpochMilli())
+                : signedJWT.getJWTClaimsSet().getExpirationTime();
 
         var verified = signedJWT.verify(verifier);
-        if(!(verified && expityTime.after(new Date())))
+        if(!(verified && expiryTime.after(new Date())))
             throw new AppException(ErrorCode.UNAUTHENTICATED);
 
         if(invalidatedTokenRepository.existsById(signedJWT.getJWTClaimsSet().getJWTID()))
@@ -150,7 +165,7 @@ public class AuthenticationService {
                 .issuer("devteria.com")                 //Xác định token được issue từ ai, định danh token
                 .issueTime(new Date())                  //Thời gian issue token và thời gian hết hạn
                 .expirationTime(new Date(
-                        Instant.now().plus(1,ChronoUnit.HOURS).toEpochMilli()
+                        Instant.now().plus(VALID_DURATION,ChronoUnit.SECONDS).toEpochMilli()
                 ))
                 .jwtID(UUID.randomUUID().toString())
                 .claim("scope",buildScope(user)) //Dùng để custom giá trị vào body
@@ -158,7 +173,7 @@ public class AuthenticationService {
 
         Payload payload = new Payload(jwtClaimSet.toJSONObject());
 
-        //Cách tạo toekn bằng nimbus
+        //Cách tạo token bằng nimbus
         JWSObject jwsObject = new JWSObject(header,payload); // Đến đoạn này là build xong infor của token
 
         //Tiếp theo đến ký token
