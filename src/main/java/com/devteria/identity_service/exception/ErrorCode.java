@@ -19,7 +19,7 @@ public enum ErrorCode {
     UNAUTHORIZED(1006,"Access Denied", HttpStatus.FORBIDDEN),
     INVALID_DOB(1008,"Your age must be at least {min}",HttpStatus.BAD_REQUEST);
 
-     int code ;
+     int code = 1000 ;
      String message;
      HttpStatusCode statusCode;
 

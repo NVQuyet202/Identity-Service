@@ -1,11 +1,8 @@
 package com.devteria.identity_service.controller;
 
 import com.devteria.identity_service.dto.request.ApiResponse;
-import com.devteria.identity_service.dto.request.PermissionCreationRequest;
 import com.devteria.identity_service.dto.request.RoleRequest;
-import com.devteria.identity_service.dto.response.PermissionResponse;
 import com.devteria.identity_service.dto.response.RoleResponse;
-import com.devteria.identity_service.service.PermissionService;
 import com.devteria.identity_service.service.RoleService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;

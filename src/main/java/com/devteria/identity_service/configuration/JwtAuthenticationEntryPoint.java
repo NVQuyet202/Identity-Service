@@ -22,7 +22,7 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
         ApiResponse<?> apiResponse = ApiResponse.builder()
                 .code(errorCode.getCode())
-                .mesage(errorCode.getMessage())
+                .message(errorCode.getMessage())
                 .build();
 
         ObjectMapper objectMapper = new ObjectMapper();
